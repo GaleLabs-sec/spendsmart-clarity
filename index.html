@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpendSmart Budget Tracker</title>
+  <!-- CLARITY TRACKING CODE HERE -->
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --ink: #182230;
+      --muted: #657286;
+      --accent: #3157d5;
+      --accent-dark: #2444b0;
+      --line: #e2e8f0;
+      --green: #16845b;
+      --red: #c23d4b;
+      --shadow: 0 12px 32px rgba(24, 34, 48, .07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, #172554, #3157d5);
+      color: white;
+      padding: 28px 20px 34px;
+    }
+    .header-inner, main { width: min(100% - 32px, 980px); margin: 0 auto; }
+    .brand { font-size: .82rem; letter-spacing: .13em; text-transform: uppercase; opacity: .82; font-weight: 700; }
+    h1 { margin: 8px 0 4px; font-size: clamp(1.8rem, 5vw, 2.6rem); }
+    header p { margin: 0; color: #e0e7ff; }
+    main { padding: 24px 0 48px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); }
+    .metric-label { color: var(--muted); font-size: .9rem; }
+    .metric { font-size: clamp(1.45rem, 4vw, 2rem); font-weight: 750; margin-top: 5px; letter-spacing: -.03em; overflow-wrap: anywhere; }
+    .metric-sub { color: var(--muted); font-size: .82rem; margin-top: 4px; }
+    .layout { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 18px; align-items: start; }
+    h2 { font-size: 1.15rem; margin: 0 0 14px; }
+    label { display: block; font-size: .9rem; font-weight: 700; margin: 12px 0 6px; }
+    input, select {
+      width: 100%; border: 1px solid #cbd5e1; border-radius: 9px; padding: 11px 12px;
+      background: white; color: var(--ink); font: inherit;
+    }
+    input:focus, select:focus { outline: 3px solid #dbeafe; border-color: var(--accent); }
+    button, .fake-button {
+      display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 9px;
+      padding: 11px 15px; font: inherit; font-weight: 700; cursor: pointer; transition: transform .12s, background .12s;
+    }
+    button:active { transform: scale(.98); }
+    .primary { color: white; background: var(--accent); width: 100%; margin-top: 16px; }
+    .primary:hover { background: var(--accent-dark); }
+    .secondary { background: #eef2ff; color: #273e9b; }
+    .delete { background: #fff0f1; color: var(--red); padding: 7px 10px; font-size: .82rem; }
+    .error { display: none; color: #a61b29; background: #fff0f1; border: 1px solid #fecdd3; border-radius: 9px; padding: 10px 12px; margin-top: 12px; font-size: .9rem; }
+    .success { display: none; color: #126b4a; background: #eafaf2; border: 1px solid #b7efd2; border-radius: 9px; padding: 10px 12px; margin-top: 12px; font-size: .9rem; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .toolbar button { flex: 1; min-width: 90px; }
+    .expense-list { list-style: none; padding: 0; margin: 0; }
+    .expense-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+    .expense-item:last-child { border-bottom: 0; }
+    .expense-name { font-weight: 700; overflow-wrap: anywhere; }
+    .expense-meta { color: var(--muted); font-size: .84rem; }
+    .expense-right { display: flex; align-items: center; gap: 10px; }
+    .amount { font-weight: 750; white-space: nowrap; }
+    .empty { color: var(--muted); padding: 20px 0 8px; text-align: center; }
+    .budget-row { display: flex; justify-content: space-between; gap: 12px; margin: 8px 0; font-size: .9rem; }
+    .progress { height: 10px; background: #e8edf5; border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: var(--green); transition: width .2s; }
+    .progress-fill.over { background: var(--red); }
+    .filter-row { display: flex; gap: 10px; align-items: end; margin: 14px 0 4px; }
+    .filter-row > div { flex: 1; min-width: 0; }
+    .filter-row label { margin-top: 0; }
+    .tips-banner {
+      margin-top: 18px; display: block; width: 100%; text-align: left; padding: 17px 18px;
+      color: #203777; background: #e7edff; border: 1px solid #cbd7ff; border-radius: 14px;
+      font-weight: 700; cursor: pointer;
+    }
+    .tips-banner span { display: block; color: #51618c; font-size: .9rem; font-weight: 400; margin-top: 3px; }
+    .help { margin-top: 18px; }
+    .help details { border-top: 1px solid var(--line); padding: 13px 0; }
+    .help summary { cursor: pointer; font-weight: 700; }
+    .help p { margin: 8px 0 0; color: var(--muted); }
+    footer { text-align: center; color: var(--muted); font-size: .82rem; padding: 10px 16px 28px; }
+    @media (max-width: 700px) {
+      .summary-grid { grid-template-columns: 1fr; gap: 10px; }
+      .layout { grid-template-columns: 1fr; }
+      .card { padding: 17px; }
+      .expense-item { align-items: flex-start; }
+      .expense-right { flex-direction: column; align-items: flex-end; gap: 5px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">SpendSmart</div>
+      <h1>Your budget, without the guesswork.</h1>
+      <p>Track spending, set a monthly target and see where your money goes.</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="summary-grid" aria-label="Budget summary">
+      <div class="card">
+        <div class="metric-label">Monthly budget</div>
+        <div class="metric" id="budgetMetric">$1,200.00</div>
+        <div class="metric-sub">Your spending target</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Total spent</div>
+        <div class="metric" id="spentMetric">$0.00</div>
+        <div class="metric-sub" id="spentSub">No expenses added yet</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Left to spend</div>
+        <div class="metric" id="leftMetric">$1,200.00</div>
+        <div class="metric-sub" id="leftSub">You're within budget</div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-bottom:18px">
+      <h2>Budget progress</h2>
+      <div class="budget-row"><span id="progressLabel">0% of budget used</span><strong id="progressAmount">$0.00 / $1,200.00</strong></div>
+      <div class="progress" aria-label="Budget progress"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="filter-row">
+        <div>
+          <label for="budgetInput">Monthly budget ($)</label>
+          <input id="budgetInput" type="number" min="1" step="0.01" value="1200" inputmode="decimal">
+        </div>
+        <button class="secondary" id="updateBudget">Update budget</button>
+      </div>
+      <div class="error" id="budgetError" role="alert"></div>
+      <div class="success" id="budgetSuccess" role="status">Budget updated.</div>
+    </section>
+
+    <div class="layout">
+      <section class="card">
+        <h2>Add an expense</h2>
+        <form id="expenseForm" novalidate>
+          <label for="expenseName">Expense name</label>
+          <input id="expenseName" type="text" maxlength="60" placeholder="e.g. Groceries">
+          <label for="expenseAmount">Amount ($)</label>
+          <input id="expenseAmount" type="number" min="0.01" step="0.01" placeholder="e.g. 42.50" inputmode="decimal">
+          <label for="expenseCategory">Category</label>
+          <select id="expenseCategory">
+            <option value="Food">Food</option>
+            <option value="Transport">Transport</option>
+            <option value="School">School</option>
+            <option value="Bills">Bills</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Other">Other</option>
+          </select>
+          <label for="expenseDate">Date</label>
+          <input id="expenseDate" type="date">
+          <button class="primary" type="submit">Add expense</button>
+          <div class="error" id="formError" role="alert"></div>
+          <div class="success" id="formSuccess" role="status">Expense added.</div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Your expenses</h2>
+        <div class="toolbar">
+          <button type="button" class="secondary" id="sortNewest">Newest first</button>
+          <button type="button" class="secondary" id="sortLargest">Largest first</button>
+          <button type="button" class="secondary" id="clearAll">Clear all</button>
+        </div>
+        <div class="filter-row">
+          <div>
+            <label for="categoryFilter">Filter by category</label>
+            <select id="categoryFilter">
+              <option value="All">All categories</option>
+              <option value="Food">Food</option>
+              <option value="Transport">Transport</option>
+              <option value="School">School</option>
+              <option value="Bills">Bills</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <ul class="expense-list" id="expenseList" aria-live="polite"></ul>
+        <div class="empty" id="emptyState">No expenses yet. Add one to get started.</div>
+      </section>
+    </div>
+
+    <!-- Deliberate usability flaw for the Clarity activity: this looks like a clickable button but intentionally does nothing. -->
+    <div class="tips-banner" role="button" tabindex="0" aria-label="Quick saving tip">
+      💡 Quick saving tip
+      <span>Small daily purchases can add up. Click to reveal a tip.</span>
+    </div>
+
+    <section class="card help">
+      <h2>Help and FAQs</h2>
+      <details>
+        <summary>How do I set my budget?</summary>
+        <p>Enter your monthly spending target in the budget field and select Update budget. The summary will recalculate automatically.</p>
+      </details>
+      <details>
+        <summary>How do I add an expense?</summary>
+        <p>Enter a name, amount, category and date. Select Add expense to include it in your spending total.</p>
+      </details>
+      <details>
+        <summary>What happens if I go over budget?</summary>
+        <p>The amount left will become negative and the progress bar will change color so you can see that spending is over your target.</p>
+      </details>
+      <details>
+        <summary>Can I filter my expenses?</summary>
+        <p>Use the category filter above your expense list to show only expenses from one category.</p>
+      </details>
+      <details>
+        <summary>Can I delete an expense?</summary>
+        <p>Select Delete next to an expense to remove it. Clear all removes every expense from the current page session.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer>SpendSmart Budget Tracker · Demo only — your entries are not saved after you close or refresh the page.</footer>
+
+  <script>
+    const expenses = [];
+    let nextId = 1;
+    let sortMode = 'newest';
+    const $ = (id) => document.getElementById(id);
+    const money = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+    const today = new Date();
+    $('expenseDate').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+    function showMessage(id, message) {
+      $(id).textContent = message;
+      $(id).style.display = 'block';
+    }
+    function hideMessage(id) { $(id).style.display = 'none'; }
+
+    $('expenseForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      hideMessage('formError');
+      hideMessage('formSuccess');
+      const name = $('expenseName').value.trim();
+      const amount = Number($('expenseAmount').value);
+      const category = $('expenseCategory').value;
+      const date = $('expenseDate').value;
+      if (!name) return showMessage('formError', 'Please enter an expense name.');
+      if (!Number.isFinite(amount) || amount <= 0) return showMessage('formError', 'Enter an amount greater than $0.');
+      if (!date) return showMessage('formError', 'Please choose a date.');
+      expenses.push({ id: nextId++, name, amount: Math.round(amount * 100) / 100, category, date });
+      $('expenseName').value = '';
+      $('expenseAmount').value = '';
+      showMessage('formSuccess', 'Expense added to your list.');
+      render();
+    });
+
+    $('updateBudget').addEventListener('click', () => {
+      hideMessage('budgetError');
+      hideMessage('budgetSuccess');
+      const value = Number($('budgetInput').value);
+      if (!Number.isFinite(value) || value <= 0) return showMessage('budgetError', 'Enter a monthly budget greater than $0.');
+      $('budgetMetric').textContent = money(value);
+      showMessage('budgetSuccess', 'Budget updated.');
+      render();
+    });
+
+    $('sortNewest').addEventListener('click', () => { sortMode = 'newest'; render(); });
+    $('sortLargest').addEventListener('click', () => { sortMode = 'largest'; render(); });
+    $('categoryFilter').addEventListener('change', render);
+    $('clearAll').addEventListener('click', () => {
+      if (!expenses.length) {
+        showMessage('formError', 'There are no expenses to clear yet.');
+        return;
+      }
+      expenses.splice(0, expenses.length);
+      hideMessage('formSuccess');
+      render();
+    });
+
+    function render() {
+      const budget = Number($('budgetInput').value) > 0 ? Number($('budgetInput').value) : 1200;
+      const spent = expenses.reduce((sum, item) => sum + item.amount, 0);
+      const left = budget - spent;
+      const percent = budget > 0 ? Math.round(spent / budget * 100) : 0;
+      $('spentMetric').textContent = money(spent);
+      $('spentSub').textContent = `${expenses.length} expense${expenses.length === 1 ? '' : 's'} added`;
+      $('leftMetric').textContent = money(left);
+      $('leftSub').textContent = left < 0 ? 'You are over budget' : 'You are within budget';
+      $('leftMetric').style.color = left < 0 ? 'var(--red)' : 'var(--ink)';
+      $('progressLabel').textContent = `${percent}% of budget used`;
+      $('progressAmount').textContent = `${money(spent)} / ${money(budget)}`;
+      $('progressFill').style.width = `${Math.min(percent, 100)}%`;
+      $('progressFill').classList.toggle('over', spent > budget);
+      const filter = $('categoryFilter').value;
+      let visible = expenses.filter(item => filter === 'All' || item.category === filter);
+      visible.sort(sortMode === 'largest' ? (a,b) => b.amount - a.amount : (a,b) => b.date.localeCompare(a.date) || b.id-a.id);
+      const list = $('expenseList');
+      list.innerHTML = '';
+      $('emptyState').style.display = visible.length ? 'none' : 'block';
+      visible.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'expense-item';
+        const leftDiv = document.createElement('div');
+        const name = document.createElement('div');
+        name.className = 'expense-name';
+        name.textContent = item.name;
+        const meta = document.createElement('div');
+        meta.className = 'expense-meta';
+        meta.textContent = `${item.category} · ${item.date}`;
+        leftDiv.append(name, meta);
+        const right = document.createElement('div');
+        right.className = 'expense-right';
+        const amount = document.createElement('span');
+        amount.className = 'amount';
+        amount.textContent = money(item.amount);
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'delete';
+        del.textContent = 'Delete';
+        del.setAttribute('aria-label', `Delete ${item.name}`);
+        del.addEventListener('click', () => {
+          const index = expenses.findIndex(exp => exp.id === item.id);
+          if (index >= 0) expenses.splice(index, 1);
+          render();
+        });
+        right.append(amount, del);
+        li.append(leftDiv, right);
+        list.appendChild(li);
+      });
+    }
+    render();
+  </script>
+</body>
+</html>
